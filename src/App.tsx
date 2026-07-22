@@ -1,8 +1,9 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import exifr from 'exifr'
 import './App.css'
 import { AppChrome } from './chrome/AppChrome'
 import { relatedExcept } from './chrome/relatedTools'
+import { summarizeExif } from './lib/summarizeExif'
 
 type BasicMetadata = {
   filename: string
@@ -15,6 +16,7 @@ type BasicMetadata = {
 type MetadataBundle = {
   basic: BasicMetadata
   exif: Record<string, unknown> | null
+  previewUrl: string
 }
 
 type FlatEntry = {
@@ -59,6 +61,12 @@ function flattenMetadata(input: unknown, prefix = ''): FlatEntry[] {
   return [{ key: prefix || 'value', value: String(input) }]
 }
 
+function isColorProfileEntry(entry: FlatEntry): boolean {
+  return /(?:Profile|MatrixColumn|TRC|Chromatic|ColorSpace|PCS|WhitePoint|Primaries|Luminance|RenderingIntent)/i.test(
+    entry.key,
+  )
+}
+
 function getImageDimensions(file: File): Promise<{ width: number; height: number }> {
   return new Promise((resolve, reject) => {
     const objectUrl = URL.createObjectURL(file)
@@ -79,11 +87,35 @@ function App() {
   const [metadata, setMetadata] = useState<MetadataBundle | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [filter, setFilter] = useState('')
 
   const flattenedExif = useMemo(
     () => flattenMetadata(metadata?.exif ?? {}).sort((a, b) => a.key.localeCompare(b.key)),
     [metadata],
   )
+  const filteredExif = useMemo(() => {
+    const normalizedFilter = filter.toLowerCase()
+    const matchingEntries = flattenedExif.filter(
+      (entry) =>
+        entry.key.toLowerCase().includes(normalizedFilter) ||
+        entry.value.toLowerCase().includes(normalizedFilter),
+    )
+
+    return {
+      entries: matchingEntries.filter((entry) => !isColorProfileEntry(entry)),
+      colorProfileEntries: matchingEntries.filter(isColorProfileEntry),
+    }
+  }, [filter, flattenedExif])
+  const summary = useMemo(() => summarizeExif(metadata?.exif ?? {}), [metadata])
+
+  useEffect(() => {
+    const previewUrl = metadata?.previewUrl
+    return () => {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl)
+      }
+    }
+  }, [metadata?.previewUrl])
 
   const processImageFile = async (file: File) => {
     if (!file.type.startsWith('image/')) {
@@ -94,6 +126,7 @@ function App() {
 
     setIsLoading(true)
     setError(null)
+    setFilter('')
 
     try {
       const dimensions = await getImageDimensions(file)
@@ -108,6 +141,7 @@ function App() {
           height: dimensions.height,
         },
         exif: exifData,
+        previewUrl: URL.createObjectURL(file),
       })
     } catch (processingError) {
       const message =
@@ -194,6 +228,35 @@ function App() {
                 Export JSON
               </button>
             </div>
+            <div className="image-overview">
+              <img
+                className="thumbnail"
+                src={metadata.previewUrl}
+                alt={`Preview of ${metadata.basic.filename}`}
+              />
+              {(summary.camera || summary.takenAt || summary.gps) && (
+                <section className="summary-cards" aria-label="Image highlights">
+                  {summary.camera && (
+                    <div>
+                      <span>Camera</span>
+                      <strong>{summary.camera}</strong>
+                    </div>
+                  )}
+                  {summary.takenAt && (
+                    <div>
+                      <span>Taken</span>
+                      <strong>{summary.takenAt}</strong>
+                    </div>
+                  )}
+                  {summary.gps && (
+                    <div>
+                      <span>GPS</span>
+                      <strong>{summary.gps}</strong>
+                    </div>
+                  )}
+                </section>
+              )}
+            </div>
             <dl className="basic-grid">
               <div>
                 <dt>Filename</dt>
@@ -219,14 +282,44 @@ function App() {
 
             <h2>EXIF / Embedded Metadata</h2>
             {flattenedExif.length > 0 ? (
-              <ul className="metadata-list">
-                {flattenedExif.map((entry) => (
-                  <li key={entry.key}>
-                    <span>{entry.key}</span>
-                    <code>{entry.value}</code>
-                  </li>
-                ))}
-              </ul>
+              <>
+                <label className="metadata-filter">
+                  <span>Filter metadata</span>
+                  <input
+                    type="search"
+                    value={filter}
+                    onChange={(event) => setFilter(event.target.value)}
+                    placeholder="Search keys or values"
+                  />
+                </label>
+                {filteredExif.entries.length > 0 ? (
+                  <ul className="metadata-list">
+                    {filteredExif.entries.map((entry) => (
+                      <li key={entry.key}>
+                        <span>{entry.key}</span>
+                        <code>{entry.value}</code>
+                      </li>
+                    ))}
+                  </ul>
+                ) : filteredExif.colorProfileEntries.length === 0 ? (
+                  <p className="filter-empty">No metadata matches this filter.</p>
+                ) : null}
+                {filteredExif.colorProfileEntries.length > 0 && (
+                  <details className="color-profile" open={filter.length > 0}>
+                    <summary>
+                      Color profile ({filteredExif.colorProfileEntries.length})
+                    </summary>
+                    <ul className="metadata-list">
+                      {filteredExif.colorProfileEntries.map((entry) => (
+                        <li key={entry.key}>
+                          <span>{entry.key}</span>
+                          <code>{entry.value}</code>
+                        </li>
+                      ))}
+                    </ul>
+                  </details>
+                )}
+              </>
             ) : (
               <p>No EXIF-like metadata was detected in this image.</p>
             )}

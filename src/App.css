@@ -142,6 +142,49 @@
   cursor: pointer;
 }
 
+.image-overview {
+  margin-top: 16px;
+  display: grid;
+  grid-template-columns: minmax(160px, 240px) 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
+.thumbnail {
+  width: 100%;
+  max-height: 240px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-2);
+  object-fit: contain;
+}
+
+.summary-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.summary-cards div {
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  background: var(--surface-raised);
+}
+
+.summary-cards span {
+  display: block;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.summary-cards strong {
+  display: block;
+  margin-top: 4px;
+  overflow-wrap: anywhere;
+}
+
 .basic-grid {
   margin: 16px 0 24px;
   display: grid;
@@ -197,6 +240,58 @@
   overflow-wrap: anywhere;
 }
 
+.metadata-filter {
+  display: grid;
+  gap: 8px;
+  margin-top: 16px;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.metadata-filter input {
+  width: 100%;
+  min-height: 40px;
+  box-sizing: border-box;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  background: var(--surface-2);
+  color: var(--text);
+  font: inherit;
+}
+
+.metadata-filter input::placeholder {
+  color: var(--muted);
+}
+
+.metadata-filter input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.filter-empty {
+  margin: 16px 0 0;
+  color: var(--muted);
+}
+
+.color-profile {
+  margin-top: 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  background: var(--surface-raised);
+}
+
+.color-profile summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.color-profile summary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 .related-tools {
   padding: 0 0 16px;
 }
@@ -231,5 +326,13 @@
   .result-header {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .image-overview {
+    grid-template-columns: 1fr;
+  }
+
+  .thumbnail {
+    max-width: 320px;
   }
 }
