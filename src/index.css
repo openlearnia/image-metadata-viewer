@@ -1,18 +1,16 @@
+@import './chrome/tokens.css';
+
 body {
   margin: 0;
   font-family:
-    Inter,
-    Segoe UI,
-    Roboto,
-    Helvetica,
-    Arial,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
     sans-serif;
-  background: #eff6ff;
-  color: #0f172a;
+  line-height: 1.5;
 }
 
 #root {
   min-height: 100vh;
-  display: flex;
-  justify-content: center;
 }

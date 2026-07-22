@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react'
 import exifr from 'exifr'
 import './App.css'
+import { AppChrome } from './chrome/AppChrome'
+import { relatedExcept } from './chrome/relatedTools'
 
 type BasicMetadata = {
   filename: string
@@ -157,69 +159,81 @@ function App() {
   }
 
   return (
-    <main className="app">
-      <header>
-        <h1>Image Metadata Viewer</h1>
-        <p>Inspect image metadata locally in your browser.</p>
-      </header>
+    <AppChrome
+      productName="Image Metadata Viewer"
+      githubUrl="https://github.com/openlearnia/image-metadata-viewer"
+      relatedTools={[
+        ...relatedExcept('https://image-metadata-viewer.openlearnia.com'),
+        {
+          name: 'Strip metadata in Image Tools',
+          href: 'https://image-tools.openlearnia.com/strip-metadata',
+        },
+      ]}
+    >
+      <div className="app">
+        <header>
+          <h1>Image Metadata Viewer</h1>
+          <p>Inspect image metadata locally in your browser.</p>
+        </header>
 
-      <section className="upload-area" onDrop={onDrop} onDragOver={onDragOver}>
-        <p>Drag and drop an image here, or select a file.</p>
-        <label className="file-picker">
-          <input type="file" accept="image/*" onChange={onFileInputChange} />
-          Choose Image
-        </label>
-        {isLoading && <p className="status">Reading metadata...</p>}
-        {error && <p className="error">{error}</p>}
-      </section>
-
-      {metadata && (
-        <section className="results">
-          <div className="result-header">
-            <h2>Basic Info</h2>
-            <button type="button" onClick={downloadJson}>
-              Export JSON
-            </button>
-          </div>
-          <dl className="basic-grid">
-            <div>
-              <dt>Filename</dt>
-              <dd>{metadata.basic.filename}</dd>
-            </div>
-            <div>
-              <dt>Size</dt>
-              <dd>
-                {toReadableSize(metadata.basic.sizeBytes)} ({metadata.basic.sizeBytes} bytes)
-              </dd>
-            </div>
-            <div>
-              <dt>Dimensions</dt>
-              <dd>
-                {metadata.basic.width} × {metadata.basic.height}
-              </dd>
-            </div>
-            <div>
-              <dt>MIME Type</dt>
-              <dd>{metadata.basic.mimeType}</dd>
-            </div>
-          </dl>
-
-          <h2>EXIF / Embedded Metadata</h2>
-          {flattenedExif.length > 0 ? (
-            <ul className="metadata-list">
-              {flattenedExif.map((entry) => (
-                <li key={entry.key}>
-                  <span>{entry.key}</span>
-                  <code>{entry.value}</code>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p>No EXIF-like metadata was detected in this image.</p>
-          )}
+        <section className="upload-area" onDrop={onDrop} onDragOver={onDragOver}>
+          <p>Drag and drop an image here, or select a file.</p>
+          <label className="file-picker">
+            <input type="file" accept="image/*" onChange={onFileInputChange} />
+            Choose Image
+          </label>
+          {isLoading && <p className="status">Reading metadata...</p>}
+          {error && <p className="error">{error}</p>}
         </section>
-      )}
-    </main>
+
+        {metadata && (
+          <section className="results">
+            <div className="result-header">
+              <h2>Basic Info</h2>
+              <button type="button" onClick={downloadJson}>
+                Export JSON
+              </button>
+            </div>
+            <dl className="basic-grid">
+              <div>
+                <dt>Filename</dt>
+                <dd>{metadata.basic.filename}</dd>
+              </div>
+              <div>
+                <dt>Size</dt>
+                <dd>
+                  {toReadableSize(metadata.basic.sizeBytes)} ({metadata.basic.sizeBytes} bytes)
+                </dd>
+              </div>
+              <div>
+                <dt>Dimensions</dt>
+                <dd>
+                  {metadata.basic.width} × {metadata.basic.height}
+                </dd>
+              </div>
+              <div>
+                <dt>MIME Type</dt>
+                <dd>{metadata.basic.mimeType}</dd>
+              </div>
+            </dl>
+
+            <h2>EXIF / Embedded Metadata</h2>
+            {flattenedExif.length > 0 ? (
+              <ul className="metadata-list">
+                {flattenedExif.map((entry) => (
+                  <li key={entry.key}>
+                    <span>{entry.key}</span>
+                    <code>{entry.value}</code>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p>No EXIF-like metadata was detected in this image.</p>
+            )}
+          </section>
+        )}
+      </div>
+    </AppChrome>
   )
 }
 
